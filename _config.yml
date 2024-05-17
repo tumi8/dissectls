@@ -10,9 +10,8 @@ github_username: syncall
 
 header_pages:
   - pages/index.md
-  - pages/figures.md
-  - pages/pipeline.md
-  - pages/ptp.md
+  - pages/data.md
+  - pages/ranking.md
 
 remote_theme: tumi8/tumi8-theme
 

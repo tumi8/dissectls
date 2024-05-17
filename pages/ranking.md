@@ -31,7 +31,7 @@ Note that some lower ranks were observed very rarely, sometimes just once.
 
 {% for type in page.tables %}
 
-### {% cycle "Cipher suites", "Supported groups", "ALPNs" %} Popularity Ranking <font size=2>(<a href="https://raw.githubusercontent.com/pam2023-51-dissectls/pam2023-51-dissectls.github.io/main/_data/{{ type }}.csv">raw</a>)</font>
+### {% cycle "Cipher suites", "Supported groups", "ALPNs" %} Popularity Ranking <font size=2><strong><a href="https://github.com/tumi8/dissectls/blob/gh_pages/_data/{{ type }}.csv">[raw]</a></strong></font>
 
 <div class="tableContainer">
     <table class="table">

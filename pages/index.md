@@ -1,18 +1,22 @@
 ---
-# Feel free to add content and custom Front Matter to this file.
-# To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
-
-layout: home
+layout: page
+toc: Home
+permalink: /
+order: 1
+title: "DissecTLS"
+description: "Additional material for the publication \"DissecTLS: A Scalable Active Scanner for TLS Server Configurations, Capabilities, and TLS Fingerprinting\" and acces to measruemnt data and code."
 ---
 
+The paper was published at the [PAM 2023](https://pam2023.networks.imdea.org/).
 
-Additional material for the publication *DissecTLS: A Scalable Active Scanner for TLS Server Configurations, Capabilities, and TLS Fingerprinting* and acces to measruemnt data and code.
+Read the final version of our paper at Springer: **[[PDF]](https://link.springer.com/content/pdf/10.1007/978-3-031-28486-1_6.pdf)** **[[ONLINE]](https://link.springer.com/chapter/10.1007/978-3-031-28486-1_6)**
 
-The paper was published at the at the [PAM 2023](https://pam2023.networks.imdea.org/) 
-
-## Paper
-
-**Abstract** Collecting metadata from TLS servers on a large scale allows to draw conclusions about their capabilities and configuration.
+<div class="accordion-box">
+  <div class="accordion-box__title">
+    Abstract
+  </div>
+  <div class="accordion-box__content">
+      <p>Collecting metadata from TLS servers on a large scale allows to draw conclusions about their capabilities and configuration.
 This provides not only insights into the Internet but it enables use cases like detecting malicious C&C servers.
 However, active scanners can only observe and interpret the behavior of TLS servers, the underlying configuration and implementation causing the behavior remains hidden.
 Existing approaches struggle between resource intensive scans that can reconstruct this data and light-weight fingerprinting approaches that aim to differentiate servers without making any assumptions about their inner working.
@@ -20,11 +24,15 @@ With this work we propose DissecTLS, an active TLS scanner that is both light-we
 This was achieved by modeling the parameters of the TLS stack and derive an active scan that dynamically creates scanning probes based on the model and the previous responses from the server.
 We provide a comparison of five active TLS scanning and fingerprinting approaches in a local testbed and on toplist targets. 
 We conducted a measurement study over nine weeks to fingerprint C&C servers and analyzed popular and deprecated TLS parameter usage.
-Similar to related work, the fingerprinting achieved a maximum precision of 99% for a conservative detection threshold of 100%; and at the same time, we improved the recall by a factor of 2.8.
+Similar to related work, the fingerprinting achieved a maximum precision of 99% for a conservative detection threshold of 100%; and at the same time, we improved the recall by a factor of 2.8.</p>
+  </div>
+</div><br>
 
-**Paper** Read the final version of our paper at Springer **[[PDF]](https://link.springer.com/content/pdf/10.1007/978-3-031-28486-1_6.pdf)** **[[ONLINE]](https://link.springer.com/chapter/10.1007/978-3-031-28486-1_6)**
-
-**Authors** [Markus Sosnowski](https://net.in.tum.de/~sosnowski), [Johannes Zirngibl](https://net.in.tum.de/~zirngibl), [Patrick Sattler](https://net.in.tum.de/~sattler), and [Georg Carle](https://net.in.tum.de/~carle)
+**Authors:**
+{% for author in site.data.authors.list %}<a style="border-bottom: none" href="https://orcid.org/{{author.orcid}}">
+<img src="assets/ORCIDiD_icon16x16.png" style="width: 1em; margin-inline-start: 0.5em;" alt="ORCID iD icon"/></a>
+[{{author.name}}](https://orcid.org/{{author.orcid}}){% if author.name contains "Sgan" %}{% else %}, {% endif %}
+{% endfor %}
 
 ## Data
 

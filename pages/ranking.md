@@ -2,6 +2,9 @@
 layout: page
 title: TLS Parameter Ranking
 permalink: /ranking/
+order: 3
+toc: TLS Parameter Ranking
+description: "The following tables show the complete TLS parameter popularity ranking from the paper together with the percentage of targets (IP address + domain name) supporting the specific value."
 tables:
   - cipher_popularity_ranking
   - supported_groups_popularity_ranking
@@ -24,7 +27,6 @@ tables:
 
 </style>
 
-The following tables show the complete TLS parameter popularity ranking from the paper together with the percentage of targets (IP address + domain name) supporting the specific value.
 Note that some lower ranks were observed very rarely, sometimes just once.
 
 {% for type in page.tables %}

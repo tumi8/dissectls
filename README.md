@@ -1,2 +1,6 @@
-# [dissectls.github.io](https://dissectls.github.io)
+# DissecTLS website
+
+    bundle install
+    bundle exec jekyll serve --livereload
+
 

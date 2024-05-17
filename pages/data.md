@@ -2,9 +2,10 @@
 layout: page
 title: Data
 permalink: /data/
+order: 2
+toc: Data
+description: "This pages describes the data published for the PAM Paper \"DissecTLS: A Scalable Active Scanner for TLS Server Configurations, Capabilities, and TLS Fingerprinting\"."
 ---
-
-This pages describes the data published for the PAM Paper *DissecTLS: A Scalable Active Scanner for TLS Server Configurations, Capabilities, and TLS Fingerprinting*. 
 
 
 The data set contains the raw measurement data from the section *Measurement Study on Top- and Blocklist Servers*.

@@ -1,8 +1,6 @@
 ---
 layout: page
-toc: Home
 permalink: /
-order: 1
 title: "DissecTLS"
 description: "Additional material for the publication \"DissecTLS: A Scalable Active Scanner for TLS Server Configurations, Capabilities, and TLS Fingerprinting\" and acces to measruemnt data and code."
 ---

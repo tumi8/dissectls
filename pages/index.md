@@ -40,7 +40,7 @@ We provide an extended [ranking]({{ site.baseurl }}{% link pages/ranking.md %}) 
 
 ## Referencing our Work
 
-If you are referring to our work or use the collected data in your publication, please refer to it with the following reference [[bib]]({{ site.baseurl }}{% link assets/dissectls.bib %})::
+If you are referring to our work or use the collected data in your publication, please refer to it with the following reference:
 
 ```bib
 {% raw %}@inproceedings{10.1007/978-3-031-28486-1_6,

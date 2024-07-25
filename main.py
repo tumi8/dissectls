@@ -3,11 +3,11 @@
 import itertools
 import logging
 import os
-import pathlib
 import shutil
 import time
 from functools import reduce
 from multiprocessing import Pool
+from pathlib import Path
 from typing import Iterator, Optional, Tuple, List
 
 import click
@@ -20,6 +20,8 @@ import tls_configs.apache as apache
 import tls_configs.nginx as nginx
 from tls_configs.test_case import create_test_cases
 from tls_configs.tls_config import generate_configs, TLSConfig
+
+CURRENT_DIR = Path(__file__).parent.absolute()
 
 
 @click.group()
@@ -70,40 +72,41 @@ def local_scan(config_dir: str, output_dir: str, debug_dir: Optional[str], gosca
 @click.option('--output-dir', type=click.Path(file_okay=False), required=True)
 @click.option('--goscanner-bin', type=click.Path(dir_okay=False, exists=True), required=True)
 @click.option('--testssl-bin', type=click.Path(dir_okay=False, exists=True), required=True)
+@click.option('--interface', type=str, required=False, default='any')
 @click.option('--capture-chs', type=bool, default=True)
-def remote_scan(input_file: str, output_dir: str, goscanner_bin: str, testssl_bin: str, capture_chs: bool):
-    pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
+def remote_scan(input_file: str, output_dir: str, goscanner_bin: str, testssl_bin: str, capture_chs: bool, interface: str):
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
     with Pool() as p:
         async_jobs = []
         # Active TLS fingerprinting
-        with CaptureClientHellos(capture_chs, [443], os.path.join(output_dir, 'atsf_chs.csv')):
+        with CaptureClientHellos(capture_chs, [443], os.path.join(output_dir, 'atsf_chs.csv'), interface=interface):
             fixed_dir = os.path.join(output_dir, 'atsf')
             subprocesses.goscanner_normal(goscanner_bin, input_file, fixed_dir)
             async_jobs.append(p.apply_async(subprocesses.generate_goscanner_fps, (goscanner_bin, fixed_dir)))
         # 2x DeepTLS
-        with CaptureClientHellos(capture_chs, [443], os.path.join(output_dir, 'dissectls_10_chs.csv')):
+        with CaptureClientHellos(capture_chs, [443], os.path.join(output_dir, 'dissectls_10_chs.csv'), interface=interface):
             subprocesses.goscanner_deep_tls(goscanner_bin, input_file, 10, os.path.join(output_dir, 'dissectls_10'))
 
-        with CaptureClientHellos(capture_chs, [443], os.path.join(output_dir, 'dissectls_chs.csv')):
+        with CaptureClientHellos(capture_chs, [443], os.path.join(output_dir, 'dissectls_chs.csv'), interface=interface):
             subprocesses.goscanner_deep_tls(goscanner_bin, input_file, 100, os.path.join(output_dir, 'dissectls'))
         # JARM
-        with CaptureClientHellos(capture_chs, [443], os.path.join(output_dir, 'jarm_chs.csv')):
+        with CaptureClientHellos(capture_chs, [443], os.path.join(output_dir, 'jarm_chs.csv'), interface=interface):
             subprocesses.goscanner_jarm(goscanner_bin, input_file, os.path.join(output_dir, 'jarm'))
 
         # testssl.sh
-        with pathlib.Path(input_file).open() as f:
+        with Path(input_file).open() as f:
             for i, chunk in enumerate(chunker(f, 200)):
                 logging.info(f'Iteration {i} started')
                 iteration_input = os.path.join(output_dir, f'iteration-{i}-input.csv')
-                pathlib.Path(iteration_input).write_text(reduce(lambda x,y: x+y, chunk))
+                Path(iteration_input).write_text(reduce(lambda x,y: x+y, chunk))
 
-                with CaptureClientHellos(capture_chs, [443], os.path.join(output_dir, 'testssl_chs.csv')):
+                with CaptureClientHellos(capture_chs, [443], os.path.join(output_dir, 'testssl_chs.csv'), interface=interface):
                     testssl_dir = os.path.join(output_dir, 'testssl', f'iteration={i}')
                     subprocesses.testssl(testssl_bin, iteration_input, testssl_dir)
                     async_jobs.append(p.apply_async(subprocesses.generate_testssl_fingerprints, [testssl_dir]))
 
                 # SSLyze
-                with CaptureClientHellos(capture_chs, [443], os.path.join(output_dir, 'sslyze_chs.csv')):
+                with CaptureClientHellos(capture_chs, [443], os.path.join(output_dir, 'sslyze_chs.csv'), interface=interface):
                     sslyze_dir = os.path.join(output_dir, 'sslyze', f'iteration={i}')
                     subprocesses.sslyze(iteration_input, sslyze_dir)
 
@@ -121,7 +124,7 @@ def generate_fingerprints(output_dir: str):
         tool = os.path.basename(dirpath)
         if tool in ['sslyze', 'testssl']:
             for iteration in dirnames:
-                iter_dir = pathlib.Path(os.path.join(dirpath, iteration))
+                iter_dir = Path(os.path.join(dirpath, iteration))
                 if iter_dir.is_dir():
                     try:
                         if tool == 'sslyze':
@@ -139,13 +142,13 @@ def create_webserver_configs(webserver: str, iteration: int, config_dir, configu
         for i, config in enumerate(configurations):
             n_config = nginx.create_nginx_config(config)
             name = os.path.join(config_dir, f'nginx_{iteration}_{i}.conf')
-            pathlib.Path(name).write_text(n_config)
+            Path(name).write_text(n_config)
             yield name
     elif webserver == 'apache':
         for i, config in enumerate(configurations):
             name = os.path.join(config_dir, f'apache_{iteration}_{i}.conf')
             a_config = apache.create_apache_config(config)
-            pathlib.Path(name).write_text(a_config)
+            Path(name).write_text(a_config)
             yield name
     else:
         logging.fatal(f'Wrong webserver {webserver}')
@@ -172,7 +175,7 @@ def stop_webservers(containers: List[str], config_names, debug_dir: Optional[str
     with Pool() as p:
         if debug_dir is not None:
             # Debugging
-            pathlib.Path(debug_dir).mkdir(exist_ok=True)
+            Path(debug_dir).mkdir(exist_ok=True)
             p.starmap(docker.save_logs, zip(itertools.cycle([debug_dir]), config_names, containers))
 
         # 4. shutdown
@@ -185,10 +188,10 @@ def stop_webservers(containers: List[str], config_names, debug_dir: Optional[str
 def do_docker_scan(iteration: int, ports: List[int], output_dir: str, debug_dir: Optional[str], goscanner_bin: str,
                    testssl_bin: str, capture_chs: bool):
     # Scan with scanners
-    pathlib.Path(output_dir).mkdir(exist_ok=True, parents=True)
+    Path(output_dir).mkdir(exist_ok=True, parents=True)
     input_file = os.path.join(output_dir, 'input.csv')
 
-    pathlib.Path(input_file).write_text(os.linesep.join((f'127.0.0.1:{p}' for p in ports)))
+    Path(input_file).write_text(os.linesep.join((f'127.0.0.1:{p}' for p in ports)))
 
     with Pool() as p:
         async_jobs = []
@@ -227,24 +230,25 @@ def do_docker_scan(iteration: int, ports: List[int], output_dir: str, debug_dir:
 
 
 class CaptureClientHellos(object):
-    def __init__(self, capture_chs: bool, ports: Optional[Iterator[int]], filename: str):
+    def __init__(self, capture_chs: bool, ports: Optional[Iterator[int]], filename: str, interface: str = 'any'):
         self.ports = ports
         self.capture_chs = capture_chs
         self.subprocesses: list
         self.filename = filename
+        self.interface = interface
 
     def __enter__(self):
         if self.capture_chs:
             if self.ports is None:
                 self.ports = [None]
-            self.subprocesses = list(map(subprocesses.tcpdump_start, self.ports))
+            self.subprocesses = list(itertools.starmap(subprocesses.tcpdump_start, (self.ports, self.interface)))
             time.sleep(2)
 
     def __exit__(self, type, value, traceback):
         if self.capture_chs:
             time.sleep(2)
             out = map(subprocesses.tcpdump_stop, self.subprocesses)
-            with pathlib.Path(self.filename).open(mode='a') as f:
+            with Path(self.filename).open(mode='a') as f:
                 f.writelines((','.join(line) + os.linesep for line in out if line[0] is not None))
 
 

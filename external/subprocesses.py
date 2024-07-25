@@ -11,15 +11,17 @@ from typing import Optional
 
 import validators
 
-GOSCANNER_DISSECTLS_CONF = "./goscanner/dissectls.conf"
-GOSCANNER_JARM_CONF = "./goscanner/jarm.conf"
-GOSCANNER_ATSF_CONF = "./goscanner/atsf.conf"
+from main import CURRENT_DIR
+
+GOSCANNER_DISSECTLS_CONF = f"{CURRENT_DIR}/goscanner/dissectls.conf"
+GOSCANNER_JARM_CONF = f"{CURRENT_DIR}/goscanner/jarm.conf"
+GOSCANNER_ATSF_CONF = f"{CURRENT_DIR}/goscanner/atsf.conf"
 
 
-def tcpdump_start(port: Optional[int]):
+def tcpdump_start(port: Optional[int], interface: str = 'any'):
     p_query = f'tcp port {port} and ' if port is not None else ''
     # Capture only Client Hellos
-    cmd = ['tcpdump', '-i', 'any', '-w', '/dev/null ', #'--count',  #
+    cmd = ['tcpdump', '-i', interface, '--count',
            f'{p_query}(tcp[((tcp[12] & 0xf0) >>2)] = 0x16) && (tcp[((tcp[12] & 0xf0) >>2)+5] = 0x01)']
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     return p
@@ -50,8 +52,9 @@ def goscanner_normal(goscanner_bin: str, input_file: str, output_dir: str):
     new_input_file = f'{output_dir}.input'
     pathlib.Path(output_dir).parent.mkdir(exist_ok=True, parents=True)
     shutil.rmtree(output_dir, ignore_errors=True)
+
     subprocess.check_output(
-        f'{goscanner_bin} create-ch-input --ch-dir ./goscanner/client-hellos -i {input_file} | shuf > {new_input_file}',
+        f'{goscanner_bin} create-ch-input --ch-dir {CURRENT_DIR}/goscanner/client-hellos -i {input_file} | shuf > {new_input_file}',
         shell=True)
     subprocess.check_output([goscanner_bin, '-C', GOSCANNER_ATSF_CONF, '-i', new_input_file, '-o', output_dir, '-l', log_file])
 
@@ -60,7 +63,7 @@ def generate_goscanner_fps(goscanner_bin: str, output_dir: str):
     temp_sorting_dir = f'{output_dir}.tmp'
     pathlib.Path(temp_sorting_dir).mkdir(exist_ok=True)
     subprocess.check_output(
-        [goscanner_bin, 'generate-fingerprints', '--ch-dir', './goscanner/client-hellos', '--scanner-dir', output_dir, '--tmp-dir', temp_sorting_dir])
+        [goscanner_bin, 'generate-fingerprints', '--ch-dir', f'{CURRENT_DIR}/goscanner/client-hellos', '--scanner-dir', output_dir, '--tmp-dir', temp_sorting_dir])
     shutil.rmtree(temp_sorting_dir, ignore_errors=True)
 
 
@@ -69,7 +72,7 @@ def goscanner_deep_tls(goscanner_bin: str, input_file: str, number_of_chs: int, 
     log_file = f'{output_dir}.log'
     shutil.rmtree(output_dir, ignore_errors=True)
     subprocess.check_output([goscanner_bin, '-C', GOSCANNER_DISSECTLS_CONF, '-i', input_file, '-o', output_dir,
-                             '--deep-tls-max-chs', str(number_of_chs), '-l', log_file])
+                             '--dissectls-max-chs', str(number_of_chs), '-l', log_file])
 
 
 def goscanner_jarm(goscanner_bin: str, input_file: str, output_dir: str):
@@ -100,7 +103,7 @@ def sslyze(input_file: str, output_dir: str):
     subprocess.check_output(
         ['python3', '-m', 'sslyze', '--targets_in', new_input, f'--json_out={output_file}', '--sslv2', '--sslv3',
          '--tlsv1', '--tlsv1_1', '--tlsv1_2', '--tlsv1_3', '--elliptic_curves', '--compression', '--resum',
-         '--fallback', '--reneg', '--early_data'], timeout=3600)
+         '--fallback', '--reneg', '--early_data'], timeout=7200)
 
 
 def generate_sslyze_fingerprints(output_dir: str):
@@ -165,7 +168,7 @@ def testssl(testssl_bin: str, input_file: str, output_dir: str):
                 f.write(
                     f'-e -s -f -p -P -S -q -g --connect-timeout 15 --openssl-timeout 15 --nodns none {add_6} --ip {ip} {server_name}:{port}' + os.linesep)
 
-    subprocess.check_output([testssl_bin, '--jsonfile', output_file, '--parallel', '--file', new_input], timeout=3600)
+    subprocess.check_output([testssl_bin, '--jsonfile', output_file, '--parallel', '--file', new_input], timeout=7200)
 
 
 def is_bad_testssl_id(id: str) -> bool:
